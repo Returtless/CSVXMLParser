@@ -6,9 +6,12 @@ import com.opencsv.bean.ColumnPositionMappingStrategy;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import org.w3c.dom.*;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -17,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, SAXException, ParserConfigurationException {
         final String fileName = "data.csv";
         final String xmlFileName = "data.xml";
         final String jsonFileName = "data.json";
@@ -49,17 +52,15 @@ public class Main {
         return staff;
     }
 
-    public static List<Employee> parseXML(String fileName) {
+    public static List<Employee> parseXML(String fileName) throws ParserConfigurationException, IOException, SAXException {
         List<Employee> staff = new ArrayList<>();
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        try {
+
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(new File(fileName));
             Node root = doc.getDocumentElement();
             read(root, staff);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
         return staff;
     }
 
