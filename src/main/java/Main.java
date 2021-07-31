@@ -5,7 +5,10 @@ import com.opencsv.CSVReader;
 import com.opencsv.bean.ColumnPositionMappingStrategy;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
+import org.w3c.dom.*;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -16,10 +19,16 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) {
         final String fileName = "data.csv";
+        final String xmlFileName = "data.xml";
         final String jsonFileName = "data.json";
+        final String jsonXmlFileName = "data1.json";
         String[] columnMapping = {"id", "firstName", "lastName", "country", "age"};
         List<Employee> list = parseCSV(columnMapping, fileName);
         String json = listToJson(list);
+        writeString(jsonXmlFileName, json);
+
+        list = parseXML(xmlFileName);
+        json = listToJson(list);
         writeString(jsonFileName, json);
     }
 
@@ -40,10 +49,44 @@ public class Main {
         return staff;
     }
 
+    public static List<Employee> parseXML(String fileName) {
+        List<Employee> staff = new ArrayList<>();
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        try {
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(new File(fileName));
+            Node root = doc.getDocumentElement();
+            read(root, staff);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return staff;
+    }
+
+    private static void read(Node node, List<Employee> staff) {
+        NodeList nodeList = node.getChildNodes();
+        boolean isEmployee = "employee".equals(node.getNodeName());
+        Employee employee = isEmployee ? new Employee() : null;
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            Node childNode = nodeList.item(i);
+            if (Node.ELEMENT_NODE == childNode.getNodeType()) {
+                Element element = (Element) childNode;
+                if (isEmployee) {
+                    employee.setAttribute(element.getNodeName(), element.getTextContent());
+                }
+                read(childNode, staff);
+            }
+        }
+        if (employee != null) {
+            staff.add(employee);
+        }
+    }
+
     public static String listToJson(List<Employee> list) {
         GsonBuilder builder = new GsonBuilder();
         Gson gson = builder.create();
-        return gson.toJson(list, new TypeToken<List<Employee>>() {
+
+        return list.isEmpty() ? "" : gson.toJson(list, new TypeToken<List<Employee>>() {
         }.getType());
     }
 
